@@ -65,6 +65,27 @@ public class PCTripletMaker
 		return trips.stream().filter(Triplet::hasAllGenes).collect(Collectors.toList());
 	}
 
+	/**
+	 * Generates triplets from Pathway Commons for the given factor.
+	 */
+	public List<Triplet> generateForFactorAndModulator(String factor, String modulator, GeneProvider loader)
+	{
+		if (loader.get(factor) == null) return Collections.emptyList();
+
+		Set<String> tars = new HashSet<>(expGraph.getDownstream(factor));
+		if (factor.equals("MYC")) tars.addAll(MYC_TARGETS);
+
+		// Don't use the modulators that are also targets
+		tars.remove(factor);
+
+		List<Triplet> trips = new ArrayList<>();
+
+		tars.stream().filter(t -> loader.get(t) != null).forEach(t ->
+				trips.add(new Triplet(loader.get(modulator), loader.get(factor), loader.get(t))));
+
+		return trips.stream().filter(Triplet::hasAllGenes).collect(Collectors.toList());
+	}
+
 	private static Set<String> MYC_TARGETS = new HashSet<>(Arrays.asList((
 		"E2F3\n" +
 		"PFKM\n" +

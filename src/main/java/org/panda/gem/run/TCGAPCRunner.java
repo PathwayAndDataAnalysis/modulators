@@ -1,7 +1,6 @@
 package org.panda.gem.run;
 
 import org.panda.gem.*;
-import org.panda.gem.resource.GeneProvider;
 import org.panda.gem.resource.PCTripletMaker;
 import org.panda.gem.resource.TCGAExpressionLoader;
 import org.panda.utility.Kronometre;
@@ -38,36 +37,41 @@ public class TCGAPCRunner
 	public static void main(String[] args) throws IOException
 	{
 		Kronometre k = new Kronometre();
-		String factor = "MYC";
-		runInAllStudies(factor);
-		integrate(factor);
+		String factor = "NR3C1";
+		String modulator = "JUN";
+		runInAllStudies(factor, modulator);
+		integrate(factor + (modulator == null ? "" : "-" + modulator));
 		k.print();
 	}
 
-	public static void runInAllStudies(String factor) throws IOException
+	public static void runInAllStudies(String factor, String modulator) throws IOException
 	{
-		Files.createDirectories(Paths.get(outDir + factor));
 		Arrays.asList(codes).stream().forEach(code -> {
 			try
 			{
 				System.out.println("code = " + code);
 				TCGAExpressionLoader loader = new TCGAExpressionLoader("/home/babur/Documents/TCGA/" + code);
 				PCTripletMaker maker = new PCTripletMaker();
-				List<Triplet> trips = maker.generateForFactor(factor, loader);
+
+				List<Triplet> trips = modulator == null ? maker.generateForFactor(factor, loader) :
+					maker.generateForFactorAndModulator(factor, modulator, loader);
 				System.out.println("Triplet initial size = " + trips.size());
+
 				trips = Selector.selectSignificantAndCategorized(trips, 0.05, 0.05);
 				System.out.println("Triplet significant size = " + trips.size());
-				write(trips, factor, code);
+				write(trips, factor + (modulator == null ? "" : "-" + modulator), code);
 			}
 			catch(IOException e){throw new RuntimeException(e);}
 		});
 	}
 
-	private static void write(List<Triplet> trips, String factor, String add) throws IOException
+	private static void write(List<Triplet> trips, String runName, String add) throws IOException
 	{
 		if (!trips.isEmpty())
 		{
-			String out = outDir + factor + File.separator + factor + "_" + add;
+			Files.createDirectories(Paths.get(outDir + runName));
+
+			String out = outDir + runName + File.separator + runName + "_" + add;
 			Triplet.write(trips, out + ".txt");
 			ModPrint mp = new ModPrint();
 			mp.generateGEMPlot(trips, out + ".svg");
@@ -75,10 +79,10 @@ public class TCGAPCRunner
 		}
 	}
 
-	public static void integrate(String factor) throws IOException
+	public static void integrate(String run) throws IOException
 	{
 		Map<Triplet, Integer> cnt = new HashMap<>();
-		Files.newDirectoryStream(Paths.get(outDir + factor)).forEach(p -> {
+		Files.newDirectoryStream(Paths.get(outDir + run)).forEach(p -> {
 			if (p.toString().endsWith(".txt"))
 			{
 				try
@@ -96,12 +100,12 @@ public class TCGAPCRunner
 		{
 			int i = rec;
 			trips = cnt.keySet().stream().filter(t -> cnt.get(t) >= i).collect(Collectors.toList());
-			write(trips, factor, "recurrent_" + rec);
+			write(trips, run, "recurrent_" + rec);
 			rec++;
 		} while (!trips.isEmpty());
 
 
-		write(cnt.keySet().stream().filter(t -> cnt.get(t) >= 3).collect(Collectors.toList()), factor,
+		write(cnt.keySet().stream().filter(t -> cnt.get(t) >= 3).collect(Collectors.toList()), run,
 			"recurrent_" + 3);
 	}
 
