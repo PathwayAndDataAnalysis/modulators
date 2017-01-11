@@ -24,14 +24,14 @@ public class GEOPCRunner
 	static final String PLATFORM_FILE = DIR + "GPL570.txt";
 
 	/**
-	 * Names of the series file that contains expression values. This one is for expO dataset.
+	 * Name of the series file that contains expression values. This one is for expO dataset.
 	 */
 	static final String SERIES_FILE = DIR + "GSE2109_series_matrix.txt";
 
 	/**
 	 * Gene symbol fo the transcription factor in focus.
 	 */
-	static final String TF_SYMBOL = "AR";
+	static final String TF_SYMBOL = "CLK1";
 
 	/**
 	 * The false discovery rate that will be applied on selecting significant gamma.
