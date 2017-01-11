@@ -31,8 +31,8 @@ public class SimpleFileExpressionLoader implements GeneProvider
 	public SimpleFileExpressionLoader(String filename) throws IOException
 	{
 		this.filename = filename;
-		readFile();
 		cache = new HashMap<>();
+		readFile();
 	}
 
 	/**
