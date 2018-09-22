@@ -4,12 +4,14 @@ import org.panda.gem.Gene;
 import org.panda.resource.tcga.ExpressionReader;
 import org.panda.utility.statistics.Histogram;
 import org.panda.utility.statistics.Summary;
+import org.panda.utility.statistics.UniquePrinter;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Loads expression from a downloaded TCGA dataset.
@@ -34,10 +36,13 @@ public class TCGAExpressionLoader implements GeneProvider
 
 	private double stdevThr;
 
-	public TCGAExpressionLoader(String dirForExpressions) throws FileNotFoundException
+	private UniquePrinter up = new UniquePrinter();
+
+	public TCGAExpressionLoader(String dirForExpressions, Set<String> sampleSubset) throws FileNotFoundException
 	{
-		expR = new ExpressionReader(dirForExpressions + "/expression.txt");
-		samples = expR.getSamples().stream().sorted().toArray(String[]::new);
+		expR = new ExpressionReader(dirForExpressions + "/expression.txt", null, 15);
+		samples = sampleSubset == null ? expR.getSamples().stream().sorted().toArray(String[]::new) :
+			expR.getSamples().stream().filter(sampleSubset::contains).sorted().toArray(String[]::new);
 		cache = new HashMap<>();
 		stdevThr = 0;
 	}
@@ -48,12 +53,24 @@ public class TCGAExpressionLoader implements GeneProvider
 		if (!cache.containsKey(symbol))
 		{
 			double[] vals = expR.getGeneAlterationArray(symbol, samples);
-			if (vals != null && Summary.stdev(vals) >= stdevThr)
+			if (vals != null)
 			{
-				Gene g = new Gene(symbol, vals);
-				cache.put(symbol, g);
+				if (Summary.stdev(vals) >= stdevThr)
+				{
+					Gene g = new Gene(symbol, vals);
+					cache.put(symbol, g);
+				}
+				else
+				{
+					cache.put(symbol, null);
+					up.print("Gene does not pass stdev threshold = ", symbol);
+				}
 			}
-			else cache.put(symbol, null);
+			else
+			{
+				cache.put(symbol, null);
+				up.print("Gene is not found = ", symbol);
+			}
 		}
 		return cache.get(symbol);
 	}

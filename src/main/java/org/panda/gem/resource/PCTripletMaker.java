@@ -3,7 +3,10 @@ package org.panda.gem.resource;
 import org.biopax.paxtools.pattern.miner.SIFEnum;
 import org.panda.gem.Triplet;
 import org.panda.resource.network.PathwayCommons;
+import org.panda.utility.graph.DirectedGraph;
 import org.panda.utility.graph.Graph;
+import org.panda.utility.graph.GraphList;
+import org.panda.utility.graph.UndirectedGraph;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -19,24 +22,24 @@ public class PCTripletMaker
 	/**
 	 * F -> T graph
 	 */
-	Graph expGraph;
+	DirectedGraph expGraph;
 
 	/**
 	 * M - F PPI graph
 	 */
-	Graph ppiGraph;
+	GraphList ppiGraph;
 
 	/**
 	 * M -> F state-change graph
 	 */
-	Graph stcGraph;
+	DirectedGraph stcGraph;
 
 	public PCTripletMaker()
 	{
 		PathwayCommons pc = new PathwayCommons();
-		expGraph = pc.getGraph(SIFEnum.CONTROLS_EXPRESSION_OF);
-		ppiGraph = pc.getGraph(SIFEnum.IN_COMPLEX_WITH, SIFEnum.INTERACTS_WITH);
-		stcGraph = pc.getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF);
+		expGraph = (DirectedGraph) pc.getGraph(SIFEnum.CONTROLS_EXPRESSION_OF);
+		ppiGraph = (GraphList) pc.getGraph(SIFEnum.IN_COMPLEX_WITH, SIFEnum.INTERACTS_WITH);
+		stcGraph = (DirectedGraph) pc.getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF);
 	}
 
 	/**
